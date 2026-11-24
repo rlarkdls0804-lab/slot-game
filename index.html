@@ -5,160 +5,1056 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>777 슬롯 & 기억력 충전소</title>
 <style>
-  body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; margin:0; background:#1a1a2e; color:#fff; font-family:sans-serif; padding:15px; box-sizing:border-box; }
-  .container { background:#16213e; padding:25px; border-radius:20px; border:4px solid #e94560; box-shadow:0 0 25px rgba(233,69,96,0.5); text-align:center; max-width:420px; width:100%; }
-  .top-bar { display:flex; justify-content:center; align-items:center; gap:8px; margin-bottom:8px; }
-  .high-score-board { font-size:14px; color:#4ecca3; font-weight:bold; background:rgba(15,52,96,0.7); padding:6px 12px; border-radius:20px; }
-  .reset-btn { background:#0f3460; color:#aaa; border:1px solid #334; border-radius:15px; padding:5px 10px; font-size:12px; cursor:pointer; }
-  .score-board { font-size:24px; margin-bottom:20px; color:#ffd700; font-weight:bold; }
-  .reels { display:flex; justify-content:center; gap:12px; margin-bottom:20px; }
-  .reel { width:85px; height:105px; background:#fff; color:#000; font-size:48px; display:flex; align-items:center; justify-content:center; border-radius:10px; border:3px solid #0f3460; user-select:none; }
-  .bet-selector { display:flex; justify-content:center; gap:8px; margin-bottom:12px; }
-  .bet-btn { flex:1; padding:10px 0; font-size:15px; font-weight:bold; cursor:pointer; background:#0f3460; color:#ccc; border:2px solid #0f3460; border-radius:8px; }
-  .bet-btn.active { background:#1a1a2e; color:#ffd700; border-color:#ffd700; }
-  .main-btn { padding:14px 28px; font-size:18px; font-weight:bold; cursor:pointer; background:#e94560; color:#fff; border:none; border-radius:10px; width:100%; margin-top:6px; }
-  .main-btn:disabled { background:#555; cursor:not-allowed; }
-  #chargeBtn { background:#4ecca3; color:#1a1a2e; display:none; }
-  #message { margin-top:18px; font-size:16px; min-height:24px; color:#4ecca3; font-weight:bold; }
-  #memorySection { display:none; }
-  .memory-info { font-size:15px; color:#ccc; margin-bottom:15px; }
-  .grid-6x6 { display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; margin-bottom:15px; }
-  .card { aspect-ratio:1/1; background:#0f3460; border:2px solid #e94560; border-radius:8px; font-size:24px; display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none; }
-  .card.flipped, .card.matched { background:#fff; cursor:default; }
-  .card.matched { border-color:#4ecca3; opacity:0.7; }
+  :root {
+    --bg: #1a1a2e;
+    --panel: #16213e;
+    --navy: #0f3460;
+    --pink: #e94560;
+    --mint: #4ecca3;
+    --gold: #ffd700;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    margin: 0;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #17172d, #24244e);
+    color: #fff;
+    font-family: "Malgun Gothic", sans-serif;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 440px;
+    padding: 24px;
+    border: 4px solid var(--pink);
+    border-radius: 20px;
+    background: var(--panel);
+    box-shadow: 0 0 25px rgba(233, 69, 96, .4);
+    text-align: center;
+  }
+
+  button {
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  button:focus-visible {
+    outline: 3px solid var(--gold);
+    outline-offset: 3px;
+  }
+
+  .top-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .high-score-board {
+    padding: 7px 12px;
+    border-radius: 20px;
+    background: rgba(15, 52, 96, .7);
+    color: var(--mint);
+    font-size: 14px;
+    font-weight: bold;
+  }
+
+  .reset-btn {
+    padding: 6px 10px;
+    border: 1px solid #445;
+    border-radius: 15px;
+    background: var(--navy);
+    color: #ddd;
+    font-size: 12px;
+  }
+
+  .score-board {
+    margin: 12px 0 20px;
+    color: var(--gold);
+    font-size: 23px;
+    font-weight: bold;
+  }
+
+  .reels {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .reel {
+    width: 85px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid var(--navy);
+    border-radius: 10px;
+    background: #fff;
+    color: #000;
+    font-size: clamp(36px, 12vw, 48px);
+    user-select: none;
+  }
+
+  .bet-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .bet-btn {
+    min-height: 44px;
+    border: 2px solid var(--navy);
+    border-radius: 8px;
+    background: var(--navy);
+    color: #ddd;
+    font-size: 13px;
+  }
+
+  .bet-btn.active {
+    border-color: var(--gold);
+    background: var(--bg);
+    color: var(--gold);
+  }
+
+  .main-btn,
+  .back-btn,
+  .reaction-btn {
+    width: 100%;
+    margin-top: 7px;
+    padding: 13px 16px;
+    border: 0;
+    border-radius: 10px;
+  }
+
+  .main-btn {
+    background: var(--pink);
+    color: #fff;
+    font-size: 17px;
+  }
+
+  .main-btn:disabled,
+  .reaction-btn:disabled {
+    background: #555;
+    cursor: not-allowed;
+  }
+
+  #chargeBtn {
+    background: var(--mint);
+    color: var(--bg);
+  }
+
+  #message,
+  #memoryMessage {
+    min-height: 26px;
+    margin-top: 15px;
+    color: var(--mint);
+    font-size: 15px;
+    font-weight: bold;
+    line-height: 1.5;
+  }
+
+  #memorySection { display: none; }
+
+  .memory-info {
+    margin: 0 0 12px;
+    color: #ddd;
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  .grid-6x6 {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .card {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 2px solid var(--pink);
+    border-radius: 8px;
+    background: var(--navy);
+    color: #fff;
+    font-size: clamp(14px, 5vw, 24px);
+    user-select: none;
+  }
+
+  .card.flipped,
+  .card.matched {
+    background: #fff;
+    color: #000;
+  }
+
+  .card.matched {
+    border-color: var(--mint);
+    opacity: .75;
+    cursor: default;
+  }
+
+  .card:disabled { cursor: default; }
+
+  .back-btn {
+    background: #34344d;
+    color: #fff;
+  }
+
+  .reaction-area {
+    margin-top: 16px;
+    padding: 14px;
+    border: 1px solid #3b4b70;
+    border-radius: 12px;
+    background: rgba(15, 52, 96, .35);
+  }
+
+  .reaction-area h3 {
+    margin: 0 0 6px;
+    color: var(--gold);
+    font-size: 17px;
+  }
+
+  .reaction-area p {
+    margin: 6px 0 10px;
+    color: #ddd;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .reaction-gauge {
+    width: 100%;
+    height: 18px;
+    margin: 10px 0 5px;
+    overflow: hidden;
+    border: 1px solid #71809a;
+    border-radius: 20px;
+    background: #10182b;
+  }
+
+  .reaction-gauge-fill {
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--mint), var(--gold));
+    transition: width .25s ease;
+  }
+
+  .gauge-label {
+    margin-bottom: 8px;
+    color: #ddd;
+    font-size: 13px;
+  }
+
+  .reaction-btn {
+    min-height: 52px;
+    background: #596579;
+    color: #fff;
+    font-size: 15px;
+  }
+
+  .reaction-btn.waiting { background: var(--pink); }
+  .reaction-btn.go { background: #21a179; color: #081e19; }
+
+  @media (max-width: 390px) {
+    .container { padding: 16px; }
+    .reels { gap: 6px; }
+    .reel { width: 72px; height: 88px; }
+    .bet-btn { font-size: 11px; }
+    .grid-6x6 { gap: 4px; }
+  }
 </style>
 </head>
 <body>
 <div class="container">
-  <div id="slotSection">
+  <section id="slotSection">
     <div class="top-bar">
-      <div class="high-score-board">🏆 최고 기록: <span id="highScore">100</span></div>
+      <div class="high-score-board">
+        🏆 최고 기록: <span id="highScore">100</span>
+      </div>
       <button type="button" class="reset-btn" id="resetBtn">초기화</button>
     </div>
-    <div class="score-board">보유 코인: <span id="coins">100</span></div>
-    <div class="reels">
+
+    <div class="score-board">
+      보유 코인: <span id="coins">100</span>
+    </div>
+
+    <div class="reels" aria-live="polite">
       <div class="reel" id="reel1">7️⃣</div>
       <div class="reel" id="reel2">7️⃣</div>
       <div class="reel" id="reel3">7️⃣</div>
     </div>
+
     <div class="bet-selector">
       <button type="button" class="bet-btn active" id="bet10">10 코인 (x1)</button>
       <button type="button" class="bet-btn" id="bet50">50 코인 (x5)</button>
       <button type="button" class="bet-btn" id="bet100">100 코인 (x10)</button>
     </div>
+
     <button type="button" class="main-btn" id="spinBtn">SPIN (10 코인)</button>
-    <button type="button" class="main-btn" id="chargeBtn">🃏 6x6 카드 맞추기로 코인 충전 (+100)</button>
-    <div id="message">배팅 금액을 선택하고 SPIN을 누르세요!</div>
-  </div>
-  <div id="memorySection">
-    <div class="score-board">🃏 6x6 기억력 충전소</div>
-    <div class="memory-info">남은 짝: <span id="pairsLeft">18</span>쌍 | 시도: <span id="attempts">0</span>회</div>
+    <button type="button" class="main-btn" id="chargeBtn">
+      🃏 기억력 충전소
+    </button>
+
+    <div id="message" aria-live="polite">
+      배팅 금액을 선택하고 SPIN을 누르세요!
+    </div>
+  </section>
+
+  <section id="memorySection">
+    <div class="score-board">🃏 기억력 충전소</div>
+
+    <div class="memory-info">
+      남은 짝: <span id="pairsLeft">18</span>쌍<br>
+      남은 기회: <span id="chancesLeft">10</span> / 10회<br>
+      다음 기회 충전: <span id="rechargeTimer">계산 중</span><br>
+      이번 게임 획득: <span id="gameReward">0</span>코인
+    </div>
+
     <div class="grid-6x6" id="cardGrid"></div>
-  </div>
+
+    <div id="memoryMessage" aria-live="polite"></div>
+
+    <div class="reaction-area" id="reactionArea">
+      <h3>⚡ 반응속도 미니게임</h3>
+      <p>
+        시작을 누른 뒤 버튼이 초록색으로 바뀌면 빠르게 누르세요.<br>
+        코인 대신 기회 충전 게이지를 얻습니다.
+      </p>
+
+      <div class="reaction-gauge">
+        <div class="reaction-gauge-fill" id="reactionGaugeFill"></div>
+      </div>
+
+      <div class="gauge-label">
+        기회 충전 게이지: <span id="reactionGaugeText">0</span>%
+      </div>
+
+      <button type="button" class="reaction-btn" id="reactionBtn">
+        반응속도 게임 시작
+      </button>
+    </div>
+
+    <button type="button" class="main-btn" id="newGameBtn" style="display:none">
+      새 기억력 게임 시작
+    </button>
+
+    <button type="button" class="back-btn" id="memoryBackBtn">
+      슬롯으로 돌아가기
+    </button>
+  </section>
 </div>
+
 <script>
-  var symbols = ['🍒','🍒','🍒','🍒','🍋','🍋','🍋','🍋','🍇','🍇','🍇','🍉','🍉','🍉','🍊','🍊','🍊','🔔','🔔','💎','💎','7️⃣'];
-  function saveNum(k, n) { try { localStorage.setItem(k, String(n)); } catch(e) {} }
-  function loadNum(k, d) { try { var v = localStorage.getItem(k); return (v !== null && v !== "" && !isNaN(Number(v))) ? Number(v) : d; } catch(e) { return d; } }
+  const symbols = [
+    '🍒', '🍋', '🍇', '🍉', '🍊', '🔔',
+    '💎', '7️⃣', '🍓', '🥝', '🍑', '🍍'
+  ];
 
-  var coins = loadNum('slot_coins_v4', 100);
-  var highScore = loadNum('slot_high_v4', Math.max(100, coins));
-  var currentBet = 10, isSpinning = false;
-  var spinBtn = document.getElementById('spinBtn'), chargeBtn = document.getElementById('chargeBtn'), msgEl = document.getElementById('message');
+  const icons = [
+    '🍎', '🍌', '🍇', '🍉', '🍓', '🍒',
+    '🍑', '🍍', '🥝', '🥑', '🍔', '🍕',
+    '🍩', '🍦', '🎈', '🎁', '⚽', '🚀'
+  ];
 
-  function updateDisplay() {
-    document.getElementById('coins').innerText = coins;
-    saveNum('slot_coins_v4', coins);
-    if (coins > highScore) { highScore = coins; saveNum('slot_high_v4', highScore); }
-    document.getElementById('highScore').innerText = highScore;
-    if (coins < 10) { spinBtn.disabled = true; chargeBtn.style.display = 'block'; msgEl.innerText = '코인이 부족합니다! 미니게임으로 충전하세요.'; }
-    else if (coins < currentBet) { spinBtn.disabled = true; chargeBtn.style.display = 'none'; msgEl.innerText = '보유 코인보다 배팅 금액이 큽니다!'; }
-    else { spinBtn.disabled = isSpinning; chargeBtn.style.display = 'none'; }
+  const MAX_CHANCES = 10;
+  const RECHARGE_AMOUNT = 2;
+  const RECHARGE_INTERVAL = 3 * 60 * 1000;
+
+  const COINS_KEY = 'slot_coins_v5';
+  const HIGH_KEY = 'slot_high_v5';
+  const CHANCES_KEY = 'memory_chances_v1';
+  const RECHARGE_TIME_KEY = 'memory_recharge_time_v1';
+  const MEMORY_STATE_KEY = 'memory_board_state_v2';
+  const REACTION_GAUGE_KEY = 'reaction_gauge_v2';
+
+  function loadNum(key, fallback) {
+    try {
+      const value = localStorage.getItem(key);
+      const number = Number(value);
+
+      return value !== null && value !== '' && Number.isFinite(number)
+        ? number
+        : fallback;
+    } catch (_) {
+      return fallback;
+    }
   }
 
-  function selectBet(amt) {
+  function saveNum(key, value) {
+    try {
+      localStorage.setItem(key, String(value));
+    } catch (_) {}
+  }
+
+  function loadMemoryState() {
+    try {
+      const raw = localStorage.getItem(MEMORY_STATE_KEY);
+      if (!raw) return null;
+
+      const state = JSON.parse(raw);
+
+      if (
+        !Array.isArray(state.deck) ||
+        state.deck.length !== 36 ||
+        !Array.isArray(state.matched) ||
+        !Array.isArray(state.open)
+      ) {
+        return null;
+      }
+
+      return state;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function saveMemoryState() {
+    try {
+      if (memoryState) {
+        localStorage.setItem(MEMORY_STATE_KEY, JSON.stringify(memoryState));
+      }
+    } catch (_) {}
+  }
+
+  let coins = Math.max(0, loadNum(COINS_KEY, 100));
+  let highScore = Math.max(100, loadNum(HIGH_KEY, Math.max(100, coins)));
+
+  let currentBet = 10;
+  let isSpinning = false;
+  let spinIntervals = [];
+
+  const spinBtn = document.getElementById('spinBtn');
+  const chargeBtn = document.getElementById('chargeBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const messageEl = document.getElementById('message');
+
+  function updateDisplay() {
+    document.getElementById('coins').innerText = String(coins);
+
+    if (coins > highScore) {
+      highScore = coins;
+      saveNum(HIGH_KEY, highScore);
+    }
+
+    saveNum(COINS_KEY, coins);
+    document.getElementById('highScore').innerText = String(highScore);
+    resetBtn.disabled = isSpinning;
+
+    // 기억력 충전소는 코인 수와 관계없이 항상 이용할 수 있습니다.
+    chargeBtn.style.display = 'block';
+
+    if (coins < 10) {
+      spinBtn.disabled = true;
+      messageEl.innerText = '코인이 부족합니다. 기억력 충전소를 이용해 보세요.';
+    } else if (coins < currentBet) {
+      spinBtn.disabled = true;
+      messageEl.innerText = '보유 코인보다 배팅 금액이 큽니다.';
+    } else {
+      spinBtn.disabled = isSpinning;
+    }
+  }
+
+  function selectBet(amount) {
     if (isSpinning) return;
-    currentBet = amt;
-    document.getElementById('bet10').className = (amt === 10) ? 'bet-btn active' : 'bet-btn';
-    document.getElementById('bet50').className = (amt === 50) ? 'bet-btn active' : 'bet-btn';
-    document.getElementById('bet100').className = (amt === 100) ? 'bet-btn active' : 'bet-btn';
-    spinBtn.innerText = 'SPIN (' + currentBet + ' 코인)';
+
+    currentBet = amount;
+
+    [10, 50, 100].forEach(value => {
+      document.getElementById('bet' + value).className =
+        value === amount ? 'bet-btn active' : 'bet-btn';
+    });
+
+    spinBtn.innerText = `SPIN (${currentBet} 코인)`;
     updateDisplay();
   }
 
-  document.getElementById('bet10').onclick = function() { selectBet(10); };
-  document.getElementById('bet50').onclick = function() { selectBet(50); };
-  document.getElementById('bet100').onclick = function() { selectBet(100); };
-  document.getElementById('resetBtn').onclick = function() {
-    if (confirm('코인과 최고 기록을 100으로 초기화할까요?')) { coins = 100; highScore = 100; updateDisplay(); msgEl.innerText = '초기화되었습니다!'; }
+  document.getElementById('bet10').onclick = () => selectBet(10);
+  document.getElementById('bet50').onclick = () => selectBet(50);
+  document.getElementById('bet100').onclick = () => selectBet(100);
+
+  resetBtn.onclick = () => {
+    if (isSpinning) return;
+
+    if (confirm('코인과 최고 기록을 100으로 초기화할까요?')) {
+      coins = 100;
+      highScore = 100;
+      saveNum(COINS_KEY, coins);
+      saveNum(HIGH_KEY, highScore);
+      updateDisplay();
+      messageEl.innerText = '초기화되었습니다!';
+    }
   };
 
-  function randSym() { return symbols.slice(Math.floor(Math.random() * symbols.length)).shift(); }
+  function randSym() {
+    return symbols[Math.floor(Math.random() * symbols.length)];
+  }
 
-  spinBtn.onclick = function() {
+  spinBtn.onclick = () => {
     if (isSpinning || coins < currentBet) return;
-    coins -= currentBet; isSpinning = true; updateDisplay(); msgEl.innerText = '행운을 빕니다...';
-    var r1El = document.getElementById('reel1'), r2El = document.getElementById('reel2'), r3El = document.getElementById('reel3');
-    var t1 = setInterval(function() { r1El.innerText = randSym(); }, 70);
-    var t2 = setInterval(function() { r2El.innerText = randSym(); }, 70);
-    var t3 = setInterval(function() { r3El.innerText = randSym(); }, 70);
-    var r1 = '', r2 = '', r3 = '';
-    setTimeout(function() { clearInterval(t1); r1 = randSym(); r1El.innerText = r1; }, 900);
-    setTimeout(function() { clearInterval(t2); r2 = randSym(); r2El.innerText = r2; }, 1350);
-    setTimeout(function() {
-      clearInterval(t3); r3 = randSym(); r3El.innerText = r3;
-      var mult = currentBet / 10;
+
+    coins -= currentBet;
+    isSpinning = true;
+    updateDisplay();
+    messageEl.innerText = '행운을 빕니다...';
+
+    const reels = [
+      document.getElementById('reel1'),
+      document.getElementById('reel2'),
+      document.getElementById('reel3')
+    ];
+
+    spinIntervals = reels.map(reel =>
+      setInterval(() => {
+        reel.innerText = randSym();
+      }, 70)
+    );
+
+    const results = ['', '', ''];
+
+    setTimeout(() => {
+      clearInterval(spinIntervals[0]);
+      results[0] = randSym();
+      reels[0].innerText = results[0];
+    }, 900);
+
+    setTimeout(() => {
+      clearInterval(spinIntervals[1]);
+      results[1] = randSym();
+      reels[1].innerText = results[1];
+    }, 1350);
+
+    setTimeout(() => {
+      clearInterval(spinIntervals[2]);
+      results[2] = randSym();
+      reels[2].innerText = results[2];
+
+      const [r1, r2, r3] = results;
+      const multiplier = currentBet / 10;
+
       if (r1 === r2 && r2 === r3) {
-        var win = ((r1 === '7️⃣') ? 1000 : (r1 === '💎' ? 300 : 100)) * mult;
-        coins += win; msgEl.innerText = (r1 === '7️⃣') ? '🎉 JACKPOT! 777 대박 (+' + win + ')' : '✨ 3개 일치! (+' + win + ')';
+        const win = (r1 === '7️⃣' ? 1000 : r1 === '💎' ? 300 : 100)
+          * multiplier;
+
+        coins += win;
+        messageEl.innerText = r1 === '7️⃣'
+          ? `🎉 JACKPOT! 777 대박 (+${win})`
+          : `✨ 3개 일치! (+${win})`;
       } else if (r1 === r2 || r2 === r3 || r1 === r3) {
-        var win2 = 15 * mult; coins += win2; msgEl.innerText = '👍 2개 일치! (+' + win2 + ')';
-      } else { msgEl.innerText = '꽝! 다시 도전해 보세요.'; }
-      isSpinning = false; updateDisplay();
+        const win = 15 * multiplier;
+        coins += win;
+        messageEl.innerText = `👍 2개 일치! (+${win})`;
+      } else {
+        messageEl.innerText = '꽝! 다시 도전해 보세요.';
+      }
+
+      isSpinning = false;
+      updateDisplay();
     }, 1800);
   };
 
-  var icons = ['🍎','🍌','🍇','🍉','🍓','🍒','🍑','🍍','🥝','🥑','🍔','🍕','🍩','🍦','🎈','🎁','⚽','🚀'];
-  var c1 = null, c2 = null, pairs = 0, tries = 0, lock = false;
+  // 기회는 최대 10개이며 3분마다 2개씩 자연 충전됩니다.
+  let chances = Math.max(
+    0,
+    Math.min(MAX_CHANCES, loadNum(CHANCES_KEY, MAX_CHANCES))
+  );
 
-  chargeBtn.onclick = function() {
+  let lastRechargeAt = loadNum(RECHARGE_TIME_KEY, Date.now());
+  let rechargeTimerId = null;
+
+  function updateRecharge() {
+    const now = Date.now();
+
+    if (chances >= MAX_CHANCES) {
+      chances = MAX_CHANCES;
+      lastRechargeAt = now;
+    } else {
+      const elapsedIntervals = Math.floor(
+        Math.max(0, now - lastRechargeAt) / RECHARGE_INTERVAL
+      );
+
+      if (elapsedIntervals > 0) {
+        chances = Math.min(
+          MAX_CHANCES,
+          chances + elapsedIntervals * RECHARGE_AMOUNT
+        );
+
+        if (chances >= MAX_CHANCES) {
+          lastRechargeAt = now;
+        } else {
+          lastRechargeAt += elapsedIntervals * RECHARGE_INTERVAL;
+        }
+      }
+    }
+
+    saveNum(CHANCES_KEY, chances);
+    saveNum(RECHARGE_TIME_KEY, lastRechargeAt);
+
+    const chanceEl = document.getElementById('chancesLeft');
+    const timerEl = document.getElementById('rechargeTimer');
+
+    if (!chanceEl || !timerEl) return;
+
+    chanceEl.innerText = String(chances);
+
+    if (chances >= MAX_CHANCES) {
+      timerEl.innerText = '가득 참';
+    } else {
+      const remaining = Math.max(
+        0,
+        RECHARGE_INTERVAL - (now - lastRechargeAt)
+      );
+      const minutes = Math.floor(remaining / 60000);
+      const seconds = Math.ceil((remaining % 60000) / 1000);
+
+      timerEl.innerText =
+        `${minutes}분 ${String(seconds).padStart(2, '0')}초 후 2회`;
+    }
+  }
+
+  function spendChance() {
+    updateRecharge();
+
+    if (chances <= 0) return false;
+
+    const wasFull = chances >= MAX_CHANCES;
+    chances--;
+
+    if (wasFull) {
+      lastRechargeAt = Date.now();
+    }
+
+    saveNum(CHANCES_KEY, chances);
+    saveNum(RECHARGE_TIME_KEY, lastRechargeAt);
+    updateRecharge();
+
+    return true;
+  }
+
+  function shuffle(array) {
+    const result = [...array];
+
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+
+    return result;
+  }
+
+  let memoryState = loadMemoryState();
+  let mismatchTimer = null;
+
+  function createMemoryState() {
+    memoryState = {
+      deck: shuffle([...icons, ...icons]),
+      matched: [],
+      open: [],
+      pairs: 0,
+      gameReward: 0,
+      pendingMismatch: false,
+      completed: false
+    };
+
+    saveMemoryState();
+  }
+
+  function updateMemoryInfo() {
+    document.getElementById('pairsLeft').innerText =
+      String(18 - (memoryState ? memoryState.pairs : 0));
+
+    document.getElementById('gameReward').innerText =
+      String(memoryState ? memoryState.gameReward : 0);
+
+    updateRecharge();
+  }
+
+  function updateGaugeDisplay() {
+    const gauge = Math.max(
+      0,
+      Math.min(99, loadNum(REACTION_GAUGE_KEY, 0))
+    );
+
+    document.getElementById('reactionGaugeFill').style.width = `${gauge}%`;
+    document.getElementById('reactionGaugeText').innerText = String(gauge);
+  }
+
+  function updateCardGrid() {
+    const grid = document.getElementById('cardGrid');
+    grid.innerHTML = '';
+
+    if (!memoryState) return;
+
+    memoryState.deck.forEach((icon, index) => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'card';
+      card.dataset.index = String(index);
+
+      const isMatched = memoryState.matched.includes(index);
+      const isOpen = memoryState.open.includes(index);
+
+      if (isMatched) {
+        card.classList.add('matched');
+        card.innerText = icon;
+        card.setAttribute('aria-label', `맞춘 카드 ${icon}`);
+        card.disabled = true;
+      } else if (isOpen) {
+        card.classList.add('flipped');
+        card.innerText = icon;
+        card.setAttribute('aria-label', `공개된 카드 ${icon}`);
+      } else {
+        card.innerText = '❓';
+        card.setAttribute('aria-label', '숨겨진 카드');
+      }
+
+      if (memoryState.completed) {
+        card.disabled = true;
+      }
+
+      card.onclick = () => handleCardClick(index);
+      grid.appendChild(card);
+    });
+  }
+
+  function showReactionMessage(message) {
+    document.getElementById('memoryMessage').innerText = message;
+  }
+
+  function showNewGameButton() {
+    const button = document.getElementById('newGameBtn');
+    button.style.display = memoryState && memoryState.completed
+      ? 'block'
+      : 'none';
+  }
+
+  function scheduleMismatchResolve() {
+    if (!memoryState || !memoryState.pendingMismatch || mismatchTimer) return;
+
+    mismatchTimer = setTimeout(() => {
+      mismatchTimer = null;
+
+      if (!memoryState || !memoryState.pendingMismatch) return;
+
+      memoryState.open = [];
+      memoryState.pendingMismatch = false;
+      saveMemoryState();
+      updateCardGrid();
+
+      if (chances <= 0) {
+        showReactionMessage(
+          '기회를 모두 사용했습니다. 반응속도 게임으로 게이지를 채워 기회를 얻을 수 있어요.'
+        );
+      } else {
+        showReactionMessage('다시 도전해 보세요!');
+      }
+    }, 650);
+  }
+
+  function finishMemoryGame() {
+    if (memoryState.completed) return;
+
+    memoryState.completed = true;
+    memoryState.gameReward += 300;
+    coins += 300;
+
+    saveMemoryState();
+    updateDisplay();
+    updateMemoryInfo();
+    updateCardGrid();
+    showNewGameButton();
+
+    showReactionMessage(
+      `모든 짝을 맞췄어요! 추가 300코인 보너스 획득 🎉 이번 게임 총 ${memoryState.gameReward}코인`
+    );
+  }
+
+  function handleCardClick(index) {
+    updateRecharge();
+
+    if (!memoryState || memoryState.completed || memoryState.pendingMismatch) {
+      return;
+    }
+
+    if (
+      memoryState.matched.includes(index) ||
+      memoryState.open.includes(index)
+    ) {
+      return;
+    }
+
+    if (chances <= 0) {
+      showReactionMessage(
+        '기회가 없습니다. 반응속도 게임으로 게이지를 채우거나 자연 충전을 기다리세요.'
+      );
+      return;
+    }
+
+    memoryState.open.push(index);
+    saveMemoryState();
+    updateCardGrid();
+
+    if (memoryState.open.length === 1) return;
+
+    const firstIndex = memoryState.open[0];
+    const secondIndex = memoryState.open[1];
+
+    if (memoryState.deck[firstIndex] === memoryState.deck[secondIndex]) {
+      memoryState.matched.push(firstIndex, secondIndex);
+      memoryState.open = [];
+      memoryState.pairs++;
+      memoryState.gameReward += 5;
+      coins += 5;
+
+      saveMemoryState();
+      updateDisplay();
+      updateMemoryInfo();
+      updateCardGrid();
+
+      if (memoryState.pairs === 18) {
+        finishMemoryGame();
+      } else {
+        showReactionMessage(
+          '짝을 맞췄어요! 코인 5개 획득. 기회는 줄지 않았습니다 🎉'
+        );
+      }
+
+      return;
+    }
+
+    if (!spendChance()) {
+      memoryState.open = [];
+      saveMemoryState();
+      updateCardGrid();
+      showReactionMessage('기회가 없습니다. 반응속도 게임을 이용해 보세요.');
+      return;
+    }
+
+    memoryState.pendingMismatch = true;
+    saveMemoryState();
+    updateMemoryInfo();
+
+    showReactionMessage(
+      `짝이 아니네요. 남은 기회 ${chances}회 — 공개된 카드는 잠시 후 다시 뒤집힙니다.`
+    );
+
+    scheduleMismatchResolve();
+  }
+
+  function enterMemoryGame() {
+    updateRecharge();
+
+    if (!memoryState) {
+      if (chances > 0) {
+        createMemoryState();
+      } else {
+        document.getElementById('slotSection').style.display = 'none';
+        document.getElementById('memorySection').style.display = 'block';
+        document.getElementById('cardGrid').innerHTML = '';
+        showReactionMessage(
+          '기회가 없습니다. 반응속도 게임으로 게이지를 채우거나 3분마다 충전되는 기회를 기다리세요.'
+        );
+        updateMemoryInfo();
+        updateGaugeDisplay();
+        showNewGameButton();
+        return;
+      }
+    }
+
     document.getElementById('slotSection').style.display = 'none';
     document.getElementById('memorySection').style.display = 'block';
-    var grid = document.getElementById('cardGrid'); grid.innerHTML = '';
-    c1 = null; c2 = null; pairs = 0; tries = 0; lock = false;
-    document.getElementById('pairsLeft').innerText = '18'; document.getElementById('attempts').innerText = '0';
-    var deck = icons.concat(icons).sort(function() { return Math.random() - 0.5; });
-    for (var i = 0; i < deck.length; i++) {
-      var card = document.createElement('div'); card.className = 'card';
-      card.setAttribute('data-icon', deck.slice(i, i + 1).shift()); card.innerText = '❓';
-      card.onclick = function() {
-        if (lock || this === c1 || this.classList.contains('matched')) return;
-        this.classList.add('flipped'); this.innerText = this.getAttribute('data-icon');
-        if (!c1) { c1 = this; return; }
-        c2 = this; tries++; document.getElementById('attempts').innerText = tries; lock = true;
-        if (c1.getAttribute('data-icon') === c2.getAttribute('data-icon')) {
-          c1.classList.add('matched'); c2.classList.add('matched'); pairs++;
-          document.getElementById('pairsLeft').innerText = 18 - pairs;
-          c1 = null; c2 = null; lock = false;
-          if (pairs === 18) {
-            setTimeout(function() {
-              alert('축하합니다! ' + tries + '번 만에 맞춰 100 코인이 충전되었습니다!');
-              coins += 100; document.getElementById('memorySection').style.display = 'none';
-              document.getElementById('slotSection').style.display = 'block';
-              updateDisplay(); msgEl.innerText = '코인 충전 완료! 다시 돌려보세요.';
-            }, 400);
-          }
-        } else {
-          setTimeout(function() {
-            c1.classList.remove('flipped'); c2.classList.remove('flipped');
-            c1.innerText = '❓'; c2.innerText = '❓'; c1 = null; c2 = null; lock = false;
-          }, 650);
-        }
-      };
-      grid.appendChild(card);
+
+    updateMemoryInfo();
+    updateGaugeDisplay();
+    updateCardGrid();
+    showNewGameButton();
+
+    if (memoryState.completed) {
+      showReactionMessage(
+        `이번 게임은 완료했습니다. 총 ${memoryState.gameReward}코인을 얻었어요.`
+      );
+    } else if (chances <= 0) {
+      showReactionMessage(
+        '기회가 없습니다. 반응속도 게임으로 게이지를 채워 기회를 얻거나 자연 충전을 기다리세요.'
+      );
+    } else if (memoryState.pendingMismatch) {
+      scheduleMismatchResolve();
+    } else {
+      showReactionMessage(
+        '짝을 맞추면 5코인! 모든 짝을 맞추면 추가 300코인을 받아요.'
+      );
+    }
+  }
+
+  function startNewMemoryGame() {
+    updateRecharge();
+
+    if (chances <= 0) {
+      showReactionMessage(
+        '새 게임을 시작하려면 기회가 필요합니다. 반응속도 게임으로 게이지를 채워 보세요.'
+      );
+      return;
+    }
+
+    if (!confirm('새 카드판을 시작할까요? 현재 카드판 진행은 사라집니다.')) {
+      return;
+    }
+
+    createMemoryState();
+    updateMemoryInfo();
+    updateCardGrid();
+    showNewGameButton();
+    showReactionMessage(
+      '새 카드판입니다! 짝을 맞추면 5코인, 모두 맞추면 추가 300코인!'
+    );
+  }
+
+  function exitMemory() {
+    document.getElementById('memorySection').style.display = 'none';
+    document.getElementById('slotSection').style.display = 'block';
+    updateDisplay();
+  }
+
+  chargeBtn.onclick = enterMemoryGame;
+  document.getElementById('memoryBackBtn').onclick = exitMemory;
+  document.getElementById('newGameBtn').onclick = startNewMemoryGame;
+
+  // 반응속도 미니게임: 코인은 주지 않고 게이지만 충전합니다.
+  let reactionState = 'idle';
+  let reactionTimeout = null;
+  let reactionStartTime = 0;
+
+  const reactionBtn = document.getElementById('reactionBtn');
+
+  function stopReactionGame() {
+    clearTimeout(reactionTimeout);
+    reactionTimeout = null;
+    reactionState = 'idle';
+    reactionBtn.className = 'reaction-btn';
+    reactionBtn.innerText = '반응속도 게임 시작';
+  }
+
+  function addGaugeProgress(progress, reactionTime) {
+    updateRecharge();
+
+    if (chances >= MAX_CHANCES) {
+      reactionBtn.innerText = '기회가 가득 찼어요! 사용하면 다시 게이지를 채울 수 있습니다.';
+      return;
+    }
+
+    let gauge = loadNum(REACTION_GAUGE_KEY, 0);
+    gauge += progress;
+
+    if (gauge >= 100) {
+      gauge -= 100;
+      chances = Math.min(MAX_CHANCES, chances + 1);
+
+      saveNum(CHANCES_KEY, chances);
+      saveNum(REACTION_GAUGE_KEY, gauge);
+
+      if (chances >= MAX_CHANCES) {
+        // 최대 기회일 때는 불필요한 초과 게이지를 보관하지 않습니다.
+        gauge = 0;
+        saveNum(REACTION_GAUGE_KEY, gauge);
+      }
+
+      updateMemoryInfo();
+      updateGaugeDisplay();
+
+      reactionBtn.innerText =
+        `${reactionTime}ms! 기회 1개 충전 완료 🎉 코인은 지급되지 않습니다.`;
+      return;
+    }
+
+    saveNum(REACTION_GAUGE_KEY, gauge);
+    updateGaugeDisplay();
+
+    reactionBtn.innerText =
+      `${reactionTime}ms! 게이지 +${progress}% — 현재 ${gauge}%`;
+  }
+
+  reactionBtn.onclick = () => {
+    if (reactionState === 'idle') {
+      updateRecharge();
+
+      if (chances >= MAX_CHANCES) {
+        reactionBtn.innerText =
+          '기회가 가득 찼어요! 기억력 게임에서 기회를 사용한 뒤 다시 해보세요.';
+        return;
+      }
+
+      reactionState = 'waiting';
+      reactionBtn.className = 'reaction-btn waiting';
+      reactionBtn.innerText = '초록색으로 바뀔 때까지 기다리세요...';
+
+      const delay = 1500 + Math.random() * 2500;
+
+      reactionTimeout = setTimeout(() => {
+        if (reactionState !== 'waiting') return;
+
+        reactionState = 'go';
+        reactionStartTime = performance.now();
+        reactionBtn.className = 'reaction-btn go';
+        reactionBtn.innerText = '지금 누르세요!';
+      }, delay);
+
+      return;
+    }
+
+    if (reactionState === 'waiting') {
+      clearTimeout(reactionTimeout);
+      reactionTimeout = null;
+      reactionState = 'idle';
+      reactionBtn.className = 'reaction-btn';
+      reactionBtn.innerText = '너무 빨라요! 다시 시작하려면 누르세요.';
+      return;
+    }
+
+    if (reactionState === 'go') {
+      const reactionTime = Math.round(performance.now() - reactionStartTime);
+      let progress = 0;
+
+      // 잘할수록 더 채워지지만, 한 번에 기회가 차지는 않도록 보상을 조정했습니다.
+      if (reactionTime <= 350) progress = 22;
+      else if (reactionTime <= 650) progress = 16;
+      else if (reactionTime <= 1000) progress = 11;
+      else if (reactionTime <= 1400) progress = 6;
+
+      reactionState = 'idle';
+      reactionBtn.className = 'reaction-btn';
+
+      if (progress === 0) {
+        reactionBtn.innerText =
+          `${reactionTime}ms! 이번에는 게이지를 얻지 못했어요. 조금 더 빠르게 눌러보세요.`;
+        return;
+      }
+
+      addGaugeProgress(progress, reactionTime);
     }
   };
+
   updateDisplay();
+  updateRecharge();
+  updateGaugeDisplay();
+
+  rechargeTimerId = setInterval(() => {
+    updateRecharge();
+
+    if (document.getElementById('memorySection').style.display !== 'none') {
+      updateMemoryInfo();
+    }
+  }, 1000);
 </script>
 </body>
 </html>
