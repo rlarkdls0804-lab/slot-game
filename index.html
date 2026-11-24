@@ -127,33 +127,40 @@
     '7️⃣'
   ];
 
-  // 안전하게 데이터 저장 및 불러오기 (localStorage + Cookie 이중 저장)
-  function saveData(key, value) {
+  // 안전한 숫자 데이터 저장 및 불러오기
+  function saveNumber(key, num) {
+    const cleanNum = Number(num);
+    if (isNaN(cleanNum)) return;
     try {
-      localStorage.setItem(key, value);
+      localStorage.setItem(key, String(cleanNum));
     } catch (e) {}
-    document.cookie = `${key}=${value}; max-age=31536000; path=/`;
+    document.cookie = key + "=" + cleanNum + "; max-age=31536000; path=/";
   }
 
-  function loadData(key) {
+  function loadNumber(key, defaultVal) {
     try {
       const val = localStorage.getItem(key);
-      if (val !== null) return val;
+      if (val !== null && val !== "" && !isNaN(Number(val))) {
+        return Number(val);
+      }
     } catch (e) {}
-    const match = document.cookie.match(new RegExp('(^| )' + key + '=([^;]+)'));
-    return match ? match[2] : null;
+
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const pair = cookies.at(i).trim().split('=');
+      if (pair.at(0) === key && pair.at(1) && !isNaN(Number(pair.at(1)))) {
+        return Number(pair.at(1));
+      }
+    }
+    return defaultVal;
   }
 
-  const savedCoins = loadData('slot_user_coins');
-  let coins = savedCoins !== null && !isNaN(parseInt(savedCoins, 10)) ? parseInt(savedCoins, 10) : 100;
-
-  const savedHigh = loadData('slot_high_score');
-  let highScore = savedHigh !== null && !isNaN(parseInt(savedHigh, 10)) ? parseInt(savedHigh, 10) : Math.max(100, coins);
-
+  let coins = loadNumber('slot_user_coins_v2', 100);
+  let highScore = loadNumber('slot_high_score_v2', Math.max(100, coins));
   let currentBet = 10;
   let isSpinning = false;
 
-  // 페이지 로드 즉시 화면 업데이트
+  // 시작 시 화면 동기화
   updateCoins();
   checkCoinState();
 
@@ -161,8 +168,8 @@
     if (confirm('보유 코인과 최고 기록을 모두 100 코인으로 초기화할까요?')) {
       coins = 100;
       highScore = 100;
-      saveData('slot_user_coins', 100);
-      saveData('slot_high_score', 100);
+      saveNumber('slot_user_coins_v2', 100);
+      saveNumber('slot_high_score_v2', 100);
       updateCoins();
       checkCoinState();
       document.getElementById('message').innerText = '데이터가 초기화되었습니다!';
@@ -181,7 +188,8 @@
   }
 
   function getRandomSymbol() {
-    return weightedSymbols[Math.floor(Math.random() * weightedSymbols.length)];
+    const idx = Math.floor(Math.random() * weightedSymbols.length);
+    return weightedSymbols.at(idx);
   }
 
   function spin() {
@@ -194,8 +202,12 @@
     document.getElementById('spinBtn').disabled = true;
     document.getElementById('message').innerText = '행운을 빕니다...';
 
-    const reels = [document.getElementById('reel1'), document.getElementById('reel2'), document.getElementById('reel3')];
-    const results = [];
+    const reels = [
+      document.getElementById('reel1'),
+      document.getElementById('reel2'),
+      document.getElementById('reel3')
+    ];
+    let r1 = '', r2 = '', r3 = '';
 
     reels.forEach((reel, index) => {
       let interval = setInterval(() => {
@@ -206,32 +218,36 @@
         clearInterval(interval);
         const finalSymbol = getRandomSymbol();
         reel.innerText = finalSymbol;
-        results[index] = finalSymbol;
-
-        if (index === 2) checkResult(results);
+        
+        if (index === 0) r1 = finalSymbol;
+        if (index === 1) r2 = finalSymbol;
+        if (index === 2) {
+          r3 = finalSymbol;
+          checkResult(r1, r2, r3);
+        }
       }, 900 + index * 450);
     });
   }
 
-  function checkResult(res) {
+  function checkResult(r1, r2, r3) {
     let baseReward = 0;
     const multiplier = currentBet / 10;
     const msg = document.getElementById('message');
 
-    // 3개 모두 일치 (0번, 1번, 2번 칸 비교)
-    if (res === res && res === res) {
-      if (res === '7️⃣') baseReward = 1000;
-      else if (res === '💎') baseReward = 300;
+    // 3개 모두 일치
+    if (r1 === r2 && r2 === r3) {
+      if (r1 === '7️⃣') baseReward = 1000;
+      else if (r1 === '💎') baseReward = 300;
       else baseReward = 100;
       
       const totalReward = baseReward * multiplier;
-      msg.innerText = (res === '7️⃣') 
+      msg.innerText = (r1 === '7️⃣') 
         ? `🎉 JACKPOT! 777 대박 (+${totalReward})` 
         : `✨ 3개 일치! (+${totalReward})`;
       coins += totalReward;
     } 
-    // 2개 일치 (0-1, 1-2, 0-2 비교)
-    else if (res === res || res === res || res === res) {
+    // 2개 일치
+    else if (r1 === r2 || r2 === r3 || r1 === r3) {
       const totalReward = 15 * multiplier;
       msg.innerText = `👍 2개 일치! (+${totalReward})`;
       coins += totalReward;
@@ -270,11 +286,11 @@
 
   function updateCoins() {
     document.getElementById('coins').innerText = coins;
-    saveData('slot_user_coins', coins);
+    saveNumber('slot_user_coins_v2', coins);
 
     if (coins > highScore) {
       highScore = coins;
-      saveData('slot_high_score', highScore);
+      saveNumber('slot_high_score_v2', highScore);
     }
     document.getElementById('highScore').innerText = highScore;
   }
@@ -288,15 +304,14 @@
 
   function startMemoryGame() {
     document.getElementById('slotSection').style.display = 'none';
-    document.getElementById('memorySection').style.display = 'block';
-    
-    const grid = document.getElementById('cardGrid');
-    grid.innerHTML = '';
-    flippedCards = [];
-    matchedPairs = 0;
-    attempts = 0;
-    lockBoard = false;
 코드를 사용할 때는 주의가 필요합니다.
+document.getElementById('memorySection').style.display = 'block';
+const grid = document.getElementById('cardGrid');
+grid.innerHTML = '';
+flippedCards = [];
+matchedPairs = 0;
+attempts = 0;
+lockBoard = false;
 document.getElementById('pairsLeft').innerText = '18';
 document.getElementById('attempts').innerText = '0';
 const deck = [...cardIcons, ...cardIcons].sort(() => Math.random() - 0.5);
@@ -322,7 +337,8 @@ checkForMatch();
 }
 function checkForMatch() {
 lockBoard = true;
-const [card1, card2] = flippedCards;
+const card1 = flippedCards.at(0);
+const card2 = flippedCards.at(1);
 if (card1.dataset.icon === card2.dataset.icon) {
 card1.classList.add('matched');
 card2.classList.add('matched');
