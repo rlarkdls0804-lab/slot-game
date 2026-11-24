@@ -15,10 +15,18 @@
     border: 4px solid #e94560; box-shadow: 0 0 25px rgba(233, 69, 96, 0.5);
     text-align: center; max-width: 420px; width: 100%;
   }
-  .high-score-board {
-    font-size: 14px; color: #4ecca3; margin-bottom: 6px; font-weight: bold;
-    background: rgba(15, 52, 96, 0.7); padding: 6px 12px; border-radius: 20px; display: inline-block;
+  .top-bar {
+    display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 8px;
   }
+  .high-score-board {
+    font-size: 14px; color: #4ecca3; font-weight: bold;
+    background: rgba(15, 52, 96, 0.7); padding: 6px 12px; border-radius: 20px;
+  }
+  .reset-btn {
+    background: #0f3460; color: #aaa; border: 1px solid #334; border-radius: 15px;
+    padding: 5px 10px; font-size: 12px; cursor: pointer;
+  }
+  .reset-btn:hover { color: #fff; border-color: #e94560; }
   .score-board { font-size: 24px; margin-bottom: 20px; color: #ffd700; font-weight: bold; }
   
   /* 슬롯머신 스타일 */
@@ -36,12 +44,12 @@
   .bet-btn {
     flex: 1; padding: 10px 0; font-size: 15px; font-weight: bold; cursor: pointer;
     background: #0f3460; color: #ccc; border: 2px solid #0f3460; border-radius: 8px;
-    transition: 0.2s; margin-top: 0;
+    transition: 0.2s;
   }
   .bet-btn.active {
     background: #1a1a2e; color: #ffd700; border-color: #ffd700;
   }
-  .bet-btn:hover:not(:disabled) { border-color: #ffd700; transform: none; background: #1a1a2e; }
+  .bet-btn:hover:not(:disabled) { border-color: #ffd700; background: #1a1a2e; }
 
   .main-btn {
     padding: 14px 28px; font-size: 18px; font-weight: bold; cursor: pointer;
@@ -75,7 +83,10 @@
 <div class="container">
   <!-- 1. 슬롯머신 화면 -->
   <div id="slotSection">
-    <div class="high-score-board">🏆 최고 보유 기록: <span id="highScore">100</span> 코인</div>
+    <div class="top-bar">
+      <div class="high-score-board">🏆 최고 기록: <span id="highScore">100</span></div>
+      <button class="reset-btn" onclick="resetAllData()">초기화</button>
+    </div>
     <div class="score-board">보유 코인: <span id="coins">100</span></div>
     
     <div class="reels">
@@ -116,26 +127,52 @@
     '7️⃣'
   ];
 
-  // 저장된 코인 및 최고 기록 불러오기
-  const savedCoins = localStorage.getItem('slot_user_coins');
-  let coins = savedCoins !== null ? parseInt(savedCoins, 10) : 100;
+  // 안전하게 데이터 저장 및 불러오기 (localStorage + Cookie 이중 저장)
+  function saveData(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {}
+    document.cookie = `${key}=${value}; max-age=31536000; path=/`;
+  }
 
-  const savedHigh = localStorage.getItem('slot_high_score');
-  let highScore = savedHigh !== null ? parseInt(savedHigh, 10) : Math.max(100, coins);
+  function loadData(key) {
+    try {
+      const val = localStorage.getItem(key);
+      if (val !== null) return val;
+    } catch (e) {}
+    const match = document.cookie.match(new RegExp('(^| )' + key + '=([^;]+)'));
+    return match ? match[2] : null;
+  }
+
+  const savedCoins = loadData('slot_user_coins');
+  let coins = savedCoins !== null && !isNaN(parseInt(savedCoins, 10)) ? parseInt(savedCoins, 10) : 100;
+
+  const savedHigh = loadData('slot_high_score');
+  let highScore = savedHigh !== null && !isNaN(parseInt(savedHigh, 10)) ? parseInt(savedHigh, 10) : Math.max(100, coins);
 
   let currentBet = 10;
   let isSpinning = false;
 
-  window.onload = function() {
-    updateCoins();
-    checkCoinState();
-  };
+  // 페이지 로드 즉시 화면 업데이트
+  updateCoins();
+  checkCoinState();
+
+  function resetAllData() {
+    if (confirm('보유 코인과 최고 기록을 모두 100 코인으로 초기화할까요?')) {
+      coins = 100;
+      highScore = 100;
+      saveData('slot_user_coins', 100);
+      saveData('slot_high_score', 100);
+      updateCoins();
+      checkCoinState();
+      document.getElementById('message').innerText = '데이터가 초기화되었습니다!';
+    }
+  }
 
   function setBet(amount) {
     if (isSpinning) return;
     currentBet = amount;
     
-    // 버튼 활성화 디자인 변경
     document.querySelectorAll('.bet-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById('bet' + amount).classList.add('active');
     
@@ -178,9 +215,10 @@
 
   function checkResult(res) {
     let baseReward = 0;
-    const multiplier = currentBet / 10; // 10코인=1배, 50코인=5배, 100코인=10배
+    const multiplier = currentBet / 10;
     const msg = document.getElementById('message');
 
+    // 3개 모두 일치 (0번, 1번, 2번 칸 비교)
     if (res === res && res === res) {
       if (res === '7️⃣') baseReward = 1000;
       else if (res === '💎') baseReward = 300;
@@ -191,7 +229,9 @@
         ? `🎉 JACKPOT! 777 대박 (+${totalReward})` 
         : `✨ 3개 일치! (+${totalReward})`;
       coins += totalReward;
-    } else if (res === res || res === res || res === res) {
+    } 
+    // 2개 일치 (0-1, 1-2, 0-2 비교)
+    else if (res === res || res === res || res === res) {
       const totalReward = 15 * multiplier;
       msg.innerText = `👍 2개 일치! (+${totalReward})`;
       coins += totalReward;
@@ -215,12 +255,10 @@
     const chargeBtn = document.getElementById('chargeBtn');
 
     if (coins < 10) {
-      // 아예 10코인도 없어서 더 이상 못 돌리는 파산 상태
       spinBtn.disabled = true;
       chargeBtn.style.display = 'block';
       msg.innerText = '코인이 부족합니다! 미니게임으로 충전하세요.';
     } else if (coins < currentBet) {
-      // 파산은 아니지만 현재 선택한 고액 배팅(50 or 100)보다 보유 코인이 적은 경우
       spinBtn.disabled = true;
       chargeBtn.style.display = 'none';
       msg.innerText = '보유 코인보다 배팅 금액이 큽니다. 금액을 낮춰주세요!';
@@ -232,12 +270,11 @@
 
   function updateCoins() {
     document.getElementById('coins').innerText = coins;
-    localStorage.setItem('slot_user_coins', coins);
+    saveData('slot_user_coins', coins);
 
-    // 최고 보유 코인 기록 갱신 체크
     if (coins > highScore) {
       highScore = coins;
-      localStorage.setItem('slot_high_score', highScore);
+      saveData('slot_high_score', highScore);
     }
     document.getElementById('highScore').innerText = highScore;
   }
@@ -259,39 +296,59 @@
     matchedPairs = 0;
     attempts = 0;
     lockBoard = false;
-    document.getElementById('pairsLeft').innerText = '18';
-    document.getElementById('attempts').innerText = '0';
-
-    const deck = [...cardIcons, ...cardIcons].sort(() => Math.random() - 0.5);
-
-    deck.forEach((icon) => {
-      const card = document.createElement('div');
-      card.classList.add('card');
-      card.dataset.icon = icon;
-      card.innerText = '❓';
-      card.onclick = () => flipCard(card);
-      grid.appendChild(card);
-    });
-  }
-
-  function flipCard(card) {
-    if (lockBoard || card.classList.contains('flipped') || card.classList.contains('matched')) return;
-
-    card.classList.add('flipped');
-    card.innerText = card.dataset.icon;
-    flippedCards.push(card);
-
-    if (flippedCards.length === 2) {
-      attempts++;
-      document.getElementById('attempts').innerText = attempts;
-      checkForMatch();
-    }
-  }
-
-  function checkForMatch() {
-    lockBoard = true;
-    const [card1, card2] = flippedCards;
-
-    if (card1.dataset.icon === card2.dataset.icon) {
-      card1.classList.add('matched');
-      card2.classList.add('matched');
+코드를 사용할 때는 주의가 필요합니다.
+document.getElementById('pairsLeft').innerText = '18';
+document.getElementById('attempts').innerText = '0';
+const deck = [...cardIcons, ...cardIcons].sort(() => Math.random() - 0.5);
+deck.forEach((icon) => {
+const card = document.createElement('div');
+card.classList.add('card');
+card.dataset.icon = icon;
+card.innerText = '❓';
+card.onclick = () => flipCard(card);
+grid.appendChild(card);
+});
+}
+function flipCard(card) {
+if (lockBoard || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+card.classList.add('flipped');
+card.innerText = card.dataset.icon;
+flippedCards.push(card);
+if (flippedCards.length === 2) {
+attempts++;
+document.getElementById('attempts').innerText = attempts;
+checkForMatch();
+}
+}
+function checkForMatch() {
+lockBoard = true;
+const [card1, card2] = flippedCards;
+if (card1.dataset.icon === card2.dataset.icon) {
+card1.classList.add('matched');
+card2.classList.add('matched');
+matchedPairs++;
+document.getElementById('pairsLeft').innerText = 18 - matchedPairs;
+flippedCards = [];
+lockBoard = false;
+if (matchedPairs === 18) {
+setTimeout(() => {
+alert(축하합니다! ${attempts}번 만에 모두 맞춰 100 코인이 충전되었습니다!);
+coins += 100;
+updateCoins();
+document.getElementById('memorySection').style.display = 'none';
+document.getElementById('slotSection').style.display = 'block';
+checkCoinState();
+document.getElementById('message').innerText = '코인 충전 완료! 다시 돌려보세요.';
+}, 400);
+}
+} else {
+setTimeout(() => {
+card1.classList.remove('flipped');
+card2.classList.remove('flipped');
+card1.innerText = '❓';
+card2.innerText = '❓';
+flippedCards = [];
+lockBoard = false;
+}, 650);
+}
+}
