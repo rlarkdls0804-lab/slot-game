@@ -15,22 +15,41 @@
     border: 4px solid #e94560; box-shadow: 0 0 25px rgba(233, 69, 96, 0.5);
     text-align: center; max-width: 420px; width: 100%;
   }
-  .score-board { font-size: 22px; margin-bottom: 20px; color: #ffd700; font-weight: bold; }
+  .high-score-board {
+    font-size: 14px; color: #4ecca3; margin-bottom: 6px; font-weight: bold;
+    background: rgba(15, 52, 96, 0.7); padding: 6px 12px; border-radius: 20px; display: inline-block;
+  }
+  .score-board { font-size: 24px; margin-bottom: 20px; color: #ffd700; font-weight: bold; }
   
   /* 슬롯머신 스타일 */
-  .reels { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; }
+  .reels { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; }
   .reel {
     width: 85px; height: 105px; background: #fff; color: #000; font-size: 48px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 10px; border: 3px solid #0f3460; user-select: none;
   }
-  button {
+
+  /* 배팅 금액 선택 버튼 스타일 */
+  .bet-selector {
+    display: flex; justify-content: center; gap: 8px; margin-bottom: 12px;
+  }
+  .bet-btn {
+    flex: 1; padding: 10px 0; font-size: 15px; font-weight: bold; cursor: pointer;
+    background: #0f3460; color: #ccc; border: 2px solid #0f3460; border-radius: 8px;
+    transition: 0.2s; margin-top: 0;
+  }
+  .bet-btn.active {
+    background: #1a1a2e; color: #ffd700; border-color: #ffd700;
+  }
+  .bet-btn:hover:not(:disabled) { border-color: #ffd700; transform: none; background: #1a1a2e; }
+
+  .main-btn {
     padding: 14px 28px; font-size: 18px; font-weight: bold; cursor: pointer;
     background: #e94560; color: white; border: none; border-radius: 10px; transition: 0.2s;
-    width: 100%; margin-top: 10px;
+    width: 100%; margin-top: 6px;
   }
-  button:disabled { background: #555; cursor: not-allowed; }
-  button:hover:not(:disabled) { background: #ff5e78; transform: scale(1.02); }
+  .main-btn:disabled { background: #555; cursor: not-allowed; }
+  .main-btn:hover:not(:disabled) { background: #ff5e78; transform: scale(1.02); }
   #chargeBtn { background: #4ecca3; color: #1a1a2e; display: none; }
   #chargeBtn:hover { background: #6ee7b7; }
   #message { margin-top: 18px; font-size: 16px; min-height: 24px; color: #4ecca3; font-weight: bold; }
@@ -56,15 +75,25 @@
 <div class="container">
   <!-- 1. 슬롯머신 화면 -->
   <div id="slotSection">
+    <div class="high-score-board">🏆 최고 보유 기록: <span id="highScore">100</span> 코인</div>
     <div class="score-board">보유 코인: <span id="coins">100</span></div>
+    
     <div class="reels">
       <div class="reel" id="reel1">7️⃣</div>
       <div class="reel" id="reel2">7️⃣</div>
       <div class="reel" id="reel3">7️⃣</div>
     </div>
-    <button id="spinBtn" onclick="spin()">SPIN (10 코인)</button>
-    <button id="chargeBtn" onclick="startMemoryGame()">🃏 6x6 카드 맞추기로 코인 충전 (+100)</button>
-    <div id="message">버튼을 눌러 시작하세요!</div>
+
+    <!-- 배팅 금액 조절 버튼 -->
+    <div class="bet-selector">
+      <button class="bet-btn active" id="bet10" onclick="setBet(10)">10 코인 (x1)</button>
+      <button class="bet-btn" id="bet50" onclick="setBet(50)">50 코인 (x5)</button>
+      <button class="bet-btn" id="bet100" onclick="setBet(100)">100 코인 (x10)</button>
+    </div>
+
+    <button class="main-btn" id="spinBtn" onclick="spin()">SPIN (10 코인)</button>
+    <button class="main-btn" id="chargeBtn" onclick="startMemoryGame()">🃏 6x6 카드 맞추기로 코인 충전 (+100)</button>
+    <div id="message">배팅 금액을 선택하고 SPIN을 누르세요!</div>
   </div>
 
   <!-- 2. 6x6 카드 기억력 게임 화면 -->
@@ -76,7 +105,6 @@
 </div>
 
 <script>
-  // 확률 조정을 위한 가중치 심볼 풀 (일반 과일이 많고 7과 다이아몬드가 적음)
   const weightedSymbols = [
     '🍒', '🍒', '🍒', '🍒',
     '🍋', '🍋', '🍋', '🍋',
@@ -88,19 +116,44 @@
     '7️⃣'
   ];
 
-  let coins = 100;
+  // 저장된 코인 및 최고 기록 불러오기
+  const savedCoins = localStorage.getItem('slot_user_coins');
+  let coins = savedCoins !== null ? parseInt(savedCoins, 10) : 100;
+
+  const savedHigh = localStorage.getItem('slot_high_score');
+  let highScore = savedHigh !== null ? parseInt(savedHigh, 10) : Math.max(100, coins);
+
+  let currentBet = 10;
   let isSpinning = false;
+
+  window.onload = function() {
+    updateCoins();
+    checkCoinState();
+  };
+
+  function setBet(amount) {
+    if (isSpinning) return;
+    currentBet = amount;
+    
+    // 버튼 활성화 디자인 변경
+    document.querySelectorAll('.bet-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('bet' + amount).classList.add('active');
+    
+    document.getElementById('spinBtn').innerText = `SPIN (${currentBet} 코인)`;
+    checkCoinState();
+  }
 
   function getRandomSymbol() {
     return weightedSymbols[Math.floor(Math.random() * weightedSymbols.length)];
   }
 
   function spin() {
-    if (isSpinning || coins < 10) return;
+    if (isSpinning || coins < currentBet) return;
     
-    coins -= 10;
+    coins -= currentBet;
     updateCoins();
     isSpinning = true;
+    toggleBetButtons(true);
     document.getElementById('spinBtn').disabled = true;
     document.getElementById('message').innerText = '행운을 빕니다...';
 
@@ -124,36 +177,69 @@
   }
 
   function checkResult(res) {
-    let reward = 0;
+    let baseReward = 0;
+    const multiplier = currentBet / 10; // 10코인=1배, 50코인=5배, 100코인=10배
     const msg = document.getElementById('message');
 
     if (res === res && res === res) {
-      if (res === '7️⃣') reward = 1000;
-      else if (res === '💎') reward = 300;
-      else reward = 100;
-      msg.innerText = (res === '7️⃣') ? '🎉 JACKPOT! 777 대박 (+1000)' : `✨ 3개 일치! (+${reward})`;
+      if (res === '7️⃣') baseReward = 1000;
+      else if (res === '💎') baseReward = 300;
+      else baseReward = 100;
+      
+      const totalReward = baseReward * multiplier;
+      msg.innerText = (res === '7️⃣') 
+        ? `🎉 JACKPOT! 777 대박 (+${totalReward})` 
+        : `✨ 3개 일치! (+${totalReward})`;
+      coins += totalReward;
     } else if (res === res || res === res || res === res) {
-      reward = 15;
-      msg.innerText = '👍 2개 일치! (+15)';
+      const totalReward = 15 * multiplier;
+      msg.innerText = `👍 2개 일치! (+${totalReward})`;
+      coins += totalReward;
     } else {
       msg.innerText = '꽝! 다시 도전해 보세요.';
     }
 
-    coins += reward;
     updateCoins();
     isSpinning = false;
+    toggleBetButtons(false);
+    checkCoinState();
+  }
+
+  function toggleBetButtons(disabled) {
+    document.querySelectorAll('.bet-btn').forEach(btn => btn.disabled = disabled);
+  }
+
+  function checkCoinState() {
+    const msg = document.getElementById('message');
+    const spinBtn = document.getElementById('spinBtn');
+    const chargeBtn = document.getElementById('chargeBtn');
 
     if (coins < 10) {
-      document.getElementById('spinBtn').disabled = true;
-      document.getElementById('chargeBtn').style.display = 'block';
+      // 아예 10코인도 없어서 더 이상 못 돌리는 파산 상태
+      spinBtn.disabled = true;
+      chargeBtn.style.display = 'block';
       msg.innerText = '코인이 부족합니다! 미니게임으로 충전하세요.';
+    } else if (coins < currentBet) {
+      // 파산은 아니지만 현재 선택한 고액 배팅(50 or 100)보다 보유 코인이 적은 경우
+      spinBtn.disabled = true;
+      chargeBtn.style.display = 'none';
+      msg.innerText = '보유 코인보다 배팅 금액이 큽니다. 금액을 낮춰주세요!';
     } else {
-      document.getElementById('spinBtn').disabled = false;
+      spinBtn.disabled = false;
+      chargeBtn.style.display = 'none';
     }
   }
 
   function updateCoins() {
     document.getElementById('coins').innerText = coins;
+    localStorage.setItem('slot_user_coins', coins);
+
+    // 최고 보유 코인 기록 갱신 체크
+    if (coins > highScore) {
+      highScore = coins;
+      localStorage.setItem('slot_high_score', highScore);
+    }
+    document.getElementById('highScore').innerText = highScore;
   }
 
   // --- 6x6 카드 기억력 게임 로직 ---
@@ -176,7 +262,6 @@
     document.getElementById('pairsLeft').innerText = '18';
     document.getElementById('attempts').innerText = '0';
 
-    // 18쌍(36장) 생성 후 셔플
     const deck = [...cardIcons, ...cardIcons].sort(() => Math.random() - 0.5);
 
     deck.forEach((icon) => {
@@ -210,34 +295,3 @@
     if (card1.dataset.icon === card2.dataset.icon) {
       card1.classList.add('matched');
       card2.classList.add('matched');
-      matchedPairs++;
-      document.getElementById('pairsLeft').innerText = 18 - matchedPairs;
-      flippedCards = [];
-      lockBoard = false;
-
-      if (matchedPairs === 18) {
-        setTimeout(() => {
-          alert(`축하합니다! ${attempts}번 만에 모두 맞춰 100 코인이 충전되었습니다!`);
-          coins += 100;
-          updateCoins();
-          document.getElementById('memorySection').style.display = 'none';
-          document.getElementById('slotSection').style.display = 'block';
-          document.getElementById('chargeBtn').style.display = 'none';
-          document.getElementById('spinBtn').disabled = false;
-          document.getElementById('message').innerText = '코인 충전 완료! 다시 돌려보세요.';
-        }, 400);
-      }
-    } else {
-      setTimeout(() => {
-        card1.classList.remove('flipped');
-        card2.classList.remove('flipped');
-        card1.innerText = '❓';
-        card2.innerText = '❓';
-        flippedCards = [];
-        lockBoard = false;
-      }, 650);
-    }
-  }
-</script>
-</body>
-</html>
